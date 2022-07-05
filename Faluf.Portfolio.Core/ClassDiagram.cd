@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="FullSignature">
+  <Class Name="Faluf.Portfolio.Core.Domain.ApplicationUser">
+    <Position X="9.25" Y="0.5" Width="3.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAQAAAAAAAAAAAABAAAAAAAAAACAgAAAAICAAA=</HashCode>
+      <FileName>Domain\ApplicationUser.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Faluf.Portfolio.Core.Domain.Log">
+    <Position X="4" Y="3.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAABAAAAAAAgAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Domain\Log.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Faluf.Portfolio.Core.Domain.BaseEntity">
+    <Position X="3.75" Y="0.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAABAAAAAAAAAAAAgAAAAIAAAA=</HashCode>
+      <FileName>Domain\BaseEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Faluf.Portfolio.Core.Domain.Document">
+    <Position X="1" Y="3.5" Width="2.25" />
+    <InheritanceLine Type="Faluf.Portfolio.Core.Domain.BaseEntity" FixedFromPoint="true">
+      <Path>
+        <Point X="4.5" Y="2.632" />
+        <Point X="4.5" Y="3.125" />
+        <Point X="2.125" Y="3.125" />
+        <Point X="2.125" Y="3.5" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAABAAAAEgAAAEAAAIAAAAgAAAAAAEAABAAAAAAAAAA=</HashCode>
+      <FileName>Domain\Document.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Faluf.Portfolio.Core.Domain.Subject">
+    <Position X="7" Y="3.5" Width="3.5" />
+    <InheritanceLine Type="Faluf.Portfolio.Core.Domain.BaseEntity" FixedFromPoint="true">
+      <Path>
+        <Point X="5.812" Y="2.632" />
+        <Point X="5.812" Y="3.125" />
+        <Point X="8.75" Y="3.125" />
+        <Point X="8.75" Y="3.5" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAABAAAAAAAgAAAAAAAAAAwCAAAAAAACAAAAAAAAAAA=</HashCode>
+      <FileName>Domain\Subject.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

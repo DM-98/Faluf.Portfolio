@@ -1,0 +1,39 @@
+﻿using Faluf.Portfolio.API.Data;
+using Faluf.Portfolio.Core.Domain;
+using Faluf.Portfolio.Core.Interfaces;
+using Faluf.Portfolio.Infrastructure.EFRepository;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography.X509Certificates;
+
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(@"/app/dataprotectionkeys")).ProtectKeysWithCertificate(new X509Certificate2(builder.Configuration["X509Cert:FilePath"], builder.Configuration["X509Cert:Password"]));
+
+builder.Services.AddDbContext<UserDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("UserDbContext") ?? throw new InvalidOperationException("Connectionstring 'UserDbContext' was not found.")));
+builder.Services.AddDbContext<LogDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("LogDbContext") ?? throw new InvalidOperationException("Connectionstring 'LogDbContext' was not found.")));
+builder.Services.AddDbContext<SubjectDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("SubjectDbContext") ?? throw new InvalidOperationException("Connectionstring 'SubjectDbContext' was not found.")));
+builder.Services.AddDbContext<DocumentDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("DocumentDbContext") ?? throw new InvalidOperationException("Connectionstring 'DocumentDbContext' was not found.")));
+
+builder.Services.AddTransient<IRepositoryAPI<ApplicationUser>, EFRepository<ApplicationUser, UserDbContext>>();
+builder.Services.AddTransient<IRepositoryAPI<Log>, EFRepository<Log, LogDbContext>>();
+builder.Services.AddTransient<IRepositoryAPI<Subject>, EFRepository<Subject, SubjectDbContext>>();
+builder.Services.AddTransient<IRepositoryAPI<Document>, EFRepository<Document, DocumentDbContext>>();
+
+builder.Services.AddControllers(options => options.SuppressAsyncSuffixInActionNames = false);
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+WebApplication app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+	app.UseSwagger();
+	app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.MapControllers();
+
+app.Run();
