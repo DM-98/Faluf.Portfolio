@@ -1,4 +1,5 @@
-﻿using Faluf.Portfolio.Core.DTOs.Response;
+﻿using AutoMapper;
+using Faluf.Portfolio.Core.DTOs.Response;
 using Faluf.Portfolio.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -6,55 +7,60 @@ using System.Runtime.CompilerServices;
 
 namespace Faluf.Portfolio.Infrastructure.EFRepository;
 
-public class EFRepository<T, TDbContext> : IRepositoryAPI<T> where T : class where TDbContext : DbContext
+public class EFRepository<T, TIN, TOUT, TDbContext> : IRepositoryAPI<T, TIN, TOUT> where T : class where TIN : class where TOUT : class where TDbContext : DbContext
 {
+	private readonly IMapper mapper;
 	private readonly TDbContext context; // Entity Frameworks Unit of Work
 	private readonly DbSet<T> table; // Entity Frameworks Repository
 
-	public EFRepository(TDbContext context)
+	public EFRepository(TDbContext context, IMapper mapper)
 	{
 		this.context = context;
+		this.mapper = mapper;
 		table = context.Set<T>();
 	}
 
-	public async IAsyncEnumerable<ResponseDTO<T>> GetAllAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+	public async IAsyncEnumerable<ResponseDTO<TOUT>> GetAllAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
 	{
 		await foreach (T entity in table.AsAsyncEnumerable())
 		{
 			if (cancellationToken.IsCancellationRequested)
 			{
-				yield return new ResponseDTO<T> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ErrorType = nameof(OperationCanceledException) };
+				yield return new ResponseDTO<TOUT> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ErrorType = nameof(OperationCanceledException) };
 				yield break;
 			}
 
-			yield return new ResponseDTO<T> { Success = true, Content = entity };
+			TOUT entityDTO = mapper.Map<TOUT>(entity);
+
+			yield return new ResponseDTO<TOUT> { Success = true, Content = entityDTO };
 		}
 	}
 
-	public async Task<ResponseDTO<T>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+	public async Task<ResponseDTO<TOUT>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
 	{
 		try
 		{
-			T? requestedEntity = await table.FindAsync(new object[] { id }, cancellationToken);
+			T requestedEntity = await table.FindAsync(new object[] { id }, cancellationToken) ?? throw new ArgumentNullException();
 
-			if (requestedEntity is null)
-			{
-				return new ResponseDTO<T> { Success = false, ErrorMessage = $"Requested {typeof(T).Name} was not found with the provided ID.", ErrorType = nameof(EntryPointNotFoundException) };
-			}
+			TOUT requestedEntityDTO = mapper.Map<TOUT>(requestedEntity);
 
-			return new ResponseDTO<T> { Success = true, Content = requestedEntity };
+			return new ResponseDTO<TOUT> { Success = true, Content = requestedEntityDTO };
+		}
+		catch (ArgumentNullException ex)
+		{
+			return new ResponseDTO<TOUT> { Success = false, ErrorMessage = $"Requested {typeof(TIN).Name} was not found with the provided ID.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(ArgumentNullException) };
 		}
 		catch (OperationCanceledException ex)
 		{
-			return new ResponseDTO<T> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(OperationCanceledException) };
+			return new ResponseDTO<TOUT> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(OperationCanceledException) };
 		}
 		catch (Exception ex)
 		{
-			return new ResponseDTO<T> { Success = false, ErrorMessage = $"Unhandled Server Error", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(Exception) };
+			return new ResponseDTO<TOUT> { Success = false, ErrorMessage = $"Unhandled server error.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(Exception) };
 		}
 	}
 
-	public async IAsyncEnumerable<ResponseDTO<T>> FindAsync(Expression<Func<T, bool>>? predicate = null, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, [EnumeratorCancellation] CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includeProperties)
+	public async IAsyncEnumerable<ResponseDTO<TOUT>> FindAsync(Expression<Func<T, bool>>? predicate = null, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, [EnumeratorCancellation] CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includeProperties)
 	{
 		IQueryable<T> query = table;
 
@@ -77,11 +83,13 @@ public class EFRepository<T, TDbContext> : IRepositoryAPI<T> where T : class whe
 			{
 				if (cancellationToken.IsCancellationRequested)
 				{
-					yield return new ResponseDTO<T> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ErrorType = nameof(OperationCanceledException) };
+					yield return new ResponseDTO<TOUT> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ErrorType = nameof(OperationCanceledException) };
 					yield break;
 				}
 
-				yield return new ResponseDTO<T> { Success = true, Content = entity };
+				TOUT entityDTO = mapper.Map<TOUT>(entity);
+
+				yield return new ResponseDTO<TOUT> { Success = true, Content = entityDTO };
 			}
 		}
 		else
@@ -90,84 +98,97 @@ public class EFRepository<T, TDbContext> : IRepositoryAPI<T> where T : class whe
 			{
 				if (cancellationToken.IsCancellationRequested)
 				{
-					yield return new ResponseDTO<T> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ErrorType = nameof(OperationCanceledException) };
+					yield return new ResponseDTO<TOUT> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ErrorType = nameof(OperationCanceledException) };
 					yield break;
 				}
 
-				yield return new ResponseDTO<T> { Success = true, Content = entity };
+				TOUT entityDTO = mapper.Map<TOUT>(entity);
+
+				yield return new ResponseDTO<TOUT> { Success = true, Content = entityDTO };
 			}
 		}
 	}
 
-	public async Task<ResponseDTO<T>> CreateAsync(T entity, CancellationToken cancellationToken = default)
+	public async Task<ResponseDTO<TOUT>> CreateAsync(TIN entityModel, CancellationToken cancellationToken = default)
 	{
+		T entity = mapper.Map<T>(entityModel);
+
 		try
 		{
 			await table.AddAsync(entity, cancellationToken);
 			await context.SaveChangesAsync(cancellationToken);
 
-			return new ResponseDTO<T> { Success = true, Content = entity };
+			TOUT entityDTO = mapper.Map<TOUT>(entity);
+
+			return new ResponseDTO<TOUT> { Success = true, Content = entityDTO };
 		}
 		catch (OperationCanceledException ex)
 		{
-			return new ResponseDTO<T> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(OperationCanceledException) };
+			return new ResponseDTO<TOUT> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(OperationCanceledException) };
 		}
 		catch (Exception ex)
 		{
-			return new ResponseDTO<T> { Success = false, ErrorMessage = $"Unhandled Server Error", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(Exception) };
+			return new ResponseDTO<TOUT> { Success = false, ErrorMessage = $"Unhandled server error.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(Exception) };
 		}
 	}
 
-	public async Task<ResponseDTO<T>> UpdateAsync(T entity, CancellationToken cancellationToken = default)
+	public async Task<ResponseDTO<TOUT>> UpdateAsync(TIN entityModel, CancellationToken cancellationToken = default)
 	{
+		T entity = mapper.Map<T>(entityModel);
+
 		try
 		{
 			context.Entry(entity).State = EntityState.Modified;
 			await context.SaveChangesAsync(cancellationToken);
 
-			return new ResponseDTO<T> { Success = true, Content = entity };
+			TOUT entityDTO = mapper.Map<TOUT>(entity);
+
+			return new ResponseDTO<TOUT> { Success = true, Content = entityDTO };
 		}
 		catch (OperationCanceledException ex)
 		{
-			return new ResponseDTO<T> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(OperationCanceledException) };
+			return new ResponseDTO<TOUT> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(OperationCanceledException) };
 		}
 		catch (DbUpdateConcurrencyException ex)
 		{
-			T? dbEntity = await table.FindAsync(entity.GetType().GetProperty("Id")?.GetValue(entity));
+			T dbEntity = await table.FindAsync(entity.GetType().GetProperty("Id")?.GetValue(entity)) ?? throw new ArgumentNullException(null, ex.InnerException);
 
-			if (dbEntity is null)
-			{
-				return new ResponseDTO<T> { Success = false, ErrorMessage = $"Concurrency conflict upon editing - {nameof(T)} was deleted from the database before your request.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(DbUpdateConcurrencyException) };
-			}
+			TOUT dbEntityDTO = mapper.Map<TOUT>(dbEntity);
 
-			return new ResponseDTO<T> { Success = false, ErrorMessage = "Concurrency conflict upon editing - check the new database data and try again.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(DbUpdateConcurrencyException), Content = dbEntity };
+			return new ResponseDTO<TOUT> { Success = false, ErrorMessage = "Concurrency conflict upon editing - check the new database data and try again.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(DbUpdateConcurrencyException), Content = dbEntityDTO };
+		}
+		catch (ArgumentNullException ex)
+		{
+			return new ResponseDTO<TOUT> { Success = false, ErrorMessage = $"Concurrency conflict upon editing - {typeof(TIN).Name} was deleted from the database before your request.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(DbUpdateConcurrencyException) };
 		}
 		catch (Exception ex)
 		{
-			return new ResponseDTO<T> { Success = false, ErrorMessage = $"Unhandled Server Error", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(Exception) };
+			return new ResponseDTO<TOUT> { Success = false, ErrorMessage = $"Unhandled server error.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(Exception) };
 		}
 	}
 
-	public async Task<ResponseDTO<T>> DeleteAsync(T entity, CancellationToken cancellationToken = default)
+	public async Task<ResponseDTO<TOUT>> DeleteAsync(T entity, CancellationToken cancellationToken = default)
 	{
 		try
 		{
 			table.Remove(entity);
 			await context.SaveChangesAsync(cancellationToken);
 
-			return new ResponseDTO<T> { Success = true, Content = entity };
+			TOUT entityDTO = mapper.Map<TOUT>(entity);
+
+			return new ResponseDTO<TOUT> { Success = true, Content = entityDTO };
 		}
 		catch (OperationCanceledException ex)
 		{
-			return new ResponseDTO<T> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(OperationCanceledException) };
+			return new ResponseDTO<TOUT> { Success = false, ErrorMessage = "Your request was cancelled due to timeout.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(OperationCanceledException) };
 		}
 		catch (DbUpdateConcurrencyException ex)
 		{
-			return new ResponseDTO<T> { Success = false, ErrorMessage = $"Concurrency conflict upon deletion - {nameof(T)} was already deleted from the database.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(DbUpdateConcurrencyException) };
+			return new ResponseDTO<TOUT> { Success = false, ErrorMessage = $"Concurrency conflict upon deletion - {typeof(TIN).Name} was already deleted from the database.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(DbUpdateConcurrencyException) };
 		}
 		catch (Exception ex)
 		{
-			return new ResponseDTO<T> { Success = false, ErrorMessage = $"Unhandled Server Error", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(Exception) };
+			return new ResponseDTO<TOUT> { Success = false, ErrorMessage = $"Unhandled server error.", ExceptionMessage = ex.Message, InnerExceptionMessage = ex.InnerException?.Message, ErrorType = nameof(Exception) };
 		}
 	}
 }

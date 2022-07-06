@@ -2,7 +2,7 @@
 
 namespace Faluf.Portfolio.Core.DTOs.Request;
 
-public class LoginDTO
+public class LoginModel
 {
 	[Required(ErrorMessage = "{0} cannot be empty!")]
 	[Display(Name = "Email")]

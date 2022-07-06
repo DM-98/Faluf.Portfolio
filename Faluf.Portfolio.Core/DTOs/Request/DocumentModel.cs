@@ -2,9 +2,10 @@
 
 namespace Faluf.Portfolio.Core.DTOs.Request;
 
-public class DocumentDTO
+public class DocumentModel
 {
 	[Required(ErrorMessage = "{0} cannot be empty!")]
+	[MaxLength(25, ErrorMessage = "The {0} must contain {1} characters or less!")]
 	[Display(Name = "Title")]
 	public string Title { get; set; } = null!;
 
@@ -13,13 +14,13 @@ public class DocumentDTO
 	public string Content { get; set; } = null!;
 
 	[Required(ErrorMessage = "At least one tag is required!")]
+	[MaxLength(200, ErrorMessage = "The {0} must contain {1} characters or less!")]
 	[Display(Name = "Tags")]
 	public string Tags { get; set; } = null!;
 
 	[Display(Name = "Mark document as finished")]
 	public bool IsFinished { get; set; }
 
-	[Required(ErrorMessage = "Choose a {0}!")]
-	[Display(Name = "Subject")]
-	public int SubjectId { get; set; }
+	[Timestamp]
+	public byte[]? RowVersion { get; set; }
 }

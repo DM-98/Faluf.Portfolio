@@ -2,7 +2,7 @@
 
 namespace Faluf.Portfolio.Core.DTOs.Response;
 
-public class ResponseDTO<T> where T : class
+public class ResponseDTO<TOUT> where TOUT : class
 {
 	public bool Success { get; set; }
 
@@ -14,5 +14,5 @@ public class ResponseDTO<T> where T : class
 
 	public string? ErrorType { get; set; }
 
-	public T? Content { get; set; }
+	public TOUT? Content { get; set; }
 }

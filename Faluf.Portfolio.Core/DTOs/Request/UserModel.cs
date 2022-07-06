@@ -2,9 +2,10 @@
 
 namespace Faluf.Portfolio.Core.DTOs.Request;
 
-public class RegisterDTO
+public class UserModel
 {
 	[Required(ErrorMessage = "{0} cannot be empty!")]
+	[EmailAddress(ErrorMessage = "{0} must be a valid email address!")]
 	[Display(Name = "Email")]
 	public string Email { get; set; } = null!;
 
@@ -15,4 +16,7 @@ public class RegisterDTO
 	[Required(ErrorMessage = "{0} cannot be empty!")]
 	[Display(Name = "Password")]
 	public string Password { get; set; } = null!;
+
+	[Timestamp]
+	public byte[]? RowVersion { get; set; }
 }

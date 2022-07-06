@@ -6,7 +6,7 @@ namespace Faluf.Portfolio.API.Controllers;
 
 [Route("logs")]
 [ApiController]
-public class LogsController : EFControllerBase<Log>
+public class LogsController : EFControllerBase<Log, Log, Log>
 {
-	public LogsController(IRepositoryAPI<Log> repository) : base(repository) { }
+	public LogsController(IRepositoryAPI<Log, Log, Log> repository) : base(repository) { }
 }

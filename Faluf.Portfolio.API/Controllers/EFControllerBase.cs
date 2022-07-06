@@ -5,32 +5,32 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Faluf.Portfolio.API.Controllers;
 
-public abstract class EFControllerBase<T> : ControllerBase where T : class
+public abstract class EFControllerBase<T, TIN, TOUT> : ControllerBase where T : class where TIN : class where TOUT : class
 {
-	private readonly IRepositoryAPI<T> repository;
+	private readonly IRepositoryAPI<T, TIN, TOUT> repository;
 
-	public EFControllerBase(IRepositoryAPI<T> repository)
+	public EFControllerBase(IRepositoryAPI<T, TIN, TOUT> repository)
 	{
 		this.repository = repository;
 	}
 
 	[HttpGet]
-	public virtual async IAsyncEnumerable<ResponseDTO<T>> GetAllAsync()
+	public async IAsyncEnumerable<ResponseDTO<TOUT>> GetAllAsync()
 	{
 		using CancellationTokenSource cts = new(TimeSpan.FromSeconds(10));
 
-		await foreach (ResponseDTO<T> entity in repository.GetAllAsync(cts.Token))
+		await foreach (ResponseDTO<TOUT> entity in repository.GetAllAsync(cts.Token))
 		{
 			yield return entity;
 		}
 	}
 
 	[HttpGet("{id}")]
-	public virtual async Task<ActionResult<ResponseDTO<T>>> GetByIdAsync(int id)
+	public async Task<ActionResult<ResponseDTO<TOUT>>> GetByIdAsync(int id)
 	{
 		using CancellationTokenSource cts = new(TimeSpan.FromSeconds(10));
 
-		ResponseDTO<T> result = await repository.GetByIdAsync(id, cts.Token);
+		ResponseDTO<TOUT> result = await repository.GetByIdAsync(id, cts.Token);
 
 		if (result.Success)
 		{
@@ -42,7 +42,7 @@ public abstract class EFControllerBase<T> : ControllerBase where T : class
 			{
 				return UnprocessableEntity(result);
 			}
-			else if (result.ErrorType is nameof(EntryPointNotFoundException))
+			else if (result.ErrorType is nameof(ArgumentNullException))
 			{
 				return NotFound(result);
 			}
@@ -54,81 +54,91 @@ public abstract class EFControllerBase<T> : ControllerBase where T : class
 	}
 
 	[HttpPost]
-	public virtual async Task<ActionResult<ResponseDTO<T>>> PostAsync(T entity)
+	public async Task<ActionResult<ResponseDTO<TOUT>>> PostAsync(TIN entityModel)
 	{
+		if (!ModelState.IsValid)
+		{
+			return BadRequest(ModelState);
+		}
+
 		using CancellationTokenSource cts = new(TimeSpan.FromSeconds(10));
 
-		ResponseDTO<T> result = await repository.CreateAsync(entity, cts.Token);
+		ResponseDTO<TOUT> resultDTO = await repository.CreateAsync(entityModel, cts.Token);
 
-		if (result.Success)
+		if (resultDTO.Success)
 		{
-			return CreatedAtAction(nameof(GetByIdAsync), new { entityId = (int)result.Content!.GetType().GetProperty("Id")!.GetValue(result.Content)! }, entity);
+			return CreatedAtAction(nameof(GetByIdAsync), new { id = (int)resultDTO.Content!.GetType().GetProperty("Id")?.GetValue(resultDTO.Content)! }, resultDTO.Content);
 		}
 		else
 		{
-			if (result.ErrorType is nameof(OperationCanceledException))
+			if (resultDTO.ErrorType is nameof(OperationCanceledException))
 			{
-				return UnprocessableEntity(result);
+				return UnprocessableEntity(resultDTO);
 			}
 			else
 			{
-				return StatusCode(StatusCodes.Status500InternalServerError, result);
+				return StatusCode(StatusCodes.Status500InternalServerError, resultDTO);
 			}
 		}
 	}
 
 	[HttpPut]
-	public virtual async Task<ActionResult<ResponseDTO<T>>> PutAsync(T entity)
+	public async Task<ActionResult<ResponseDTO<TOUT>>> PutAsync(TIN entity)
 	{
+		if (!ModelState.IsValid)
+		{
+			return BadRequest(ModelState);
+		}
+
 		using CancellationTokenSource cts = new(TimeSpan.FromSeconds(10));
 
-		ResponseDTO<T> result = await repository.UpdateAsync(entity, cts.Token);
+		ResponseDTO<TOUT> resultDTO = await repository.UpdateAsync(entity, cts.Token);
 
-		if (result.Success)
+		if (resultDTO.Success)
 		{
-			return Ok(result);
+			return Ok(resultDTO);
 		}
 		else
 		{
-			if (result.ErrorType is nameof(OperationCanceledException))
+			if (resultDTO.ErrorType is nameof(OperationCanceledException))
 			{
-				return UnprocessableEntity(result);
+				return UnprocessableEntity(resultDTO);
 			}
-			else if (result.ErrorType is nameof(DbUpdateConcurrencyException))
+			else if (resultDTO.ErrorType is nameof(DbUpdateConcurrencyException))
 			{
-				return Conflict(result);
+				return Conflict(resultDTO);
 			}
 			else
 			{
-				return StatusCode(StatusCodes.Status500InternalServerError, result);
+				return StatusCode(StatusCodes.Status500InternalServerError, resultDTO);
 			}
 		}
 	}
 
 	[HttpDelete]
-	public virtual async Task<ActionResult<ResponseDTO<T>>> DeleteAsync(T entity)
+	public async Task<ActionResult<ResponseDTO<TOUT>>> DeleteAsync(T entity)
 	{
 		using CancellationTokenSource cts = new(TimeSpan.FromSeconds(10));
 
-		ResponseDTO<T> result = await repository.DeleteAsync(entity, cts.Token);
+		ResponseDTO<TOUT> resultDTO = await repository.DeleteAsync(entity, cts.Token);
 
-		if (result.Success)
+		if (resultDTO.Success)
 		{
-			return Ok(result);
+			return Ok(resultDTO);
 		}
 		else
 		{
-			if (result.ErrorType is nameof(OperationCanceledException))
+			if (resultDTO.ErrorType is nameof(OperationCanceledException))
 			{
-				return UnprocessableEntity(result);
+				return UnprocessableEntity(resultDTO);
 			}
-			else if (result.ErrorType is nameof(DbUpdateConcurrencyException))
+			else if (resultDTO.ErrorType is nameof(DbUpdateConcurrencyException))
 			{
-				return Conflict(result);
+				return Conflict(resultDTO);
 			}
 			else
 			{
-				return StatusCode(StatusCodes.Status500InternalServerError, result);
+				return StatusCode(StatusCodes.Status500InternalServerError, resultDTO);
 			}
 		}
 	}
