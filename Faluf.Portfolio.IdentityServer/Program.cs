@@ -15,19 +15,16 @@ builder.Services.AddIdentityServer()
 	.AddOperationalStore(options => options.ConfigureDbContext = b => b.UseSqlServer(builder.Configuration.GetConnectionString("ApplicationDbContext"), sqlOptions => sqlOptions.MigrationsAssembly(migrationsAssembly)))
 	.AddAspNetIdentity<ApplicationUser>()
 	.AddDeveloperSigningCredential();
-builder.Services.AddControllersWithViews();
 builder.Services.AddCors();
 builder.Services.AddAuthorization();
 
 WebApplication app = builder.Build();
 
 app.UseCors(x => x.AllowAnyMethod().AllowAnyHeader().SetIsOriginAllowed(origin => true).AllowCredentials());
-app.UseRouting();
 app.UseHttpsRedirection();
 
 app.UseIdentityServer();
 app.UseAuthorization();
-app.UseEndpoints(endpoints => endpoints.MapDefaultControllerRoute());
 
 if (args.Contains("/seed"))
 {

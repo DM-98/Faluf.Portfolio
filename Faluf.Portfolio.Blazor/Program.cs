@@ -22,7 +22,7 @@ builder.Services.AddTransient<IAuthenticationService<TokenResponse>, Authenticat
 
 builder.Services.AddSingleton(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7059") });
 
-builder.Services.AddOptions();
+//builder.Services.AddOptions();
 builder.Services.AddAuthorizationCore();
 
 await builder.Build().RunAsync();

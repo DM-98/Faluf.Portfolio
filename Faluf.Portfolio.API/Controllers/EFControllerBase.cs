@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Faluf.Portfolio.API.Controllers;
 
-[Authorize(Policy = "Read")]
+[Authorize("Read")]
 public abstract class EFControllerBase<T, TIN, TOUT> : ControllerBase where T : class where TIN : class where TOUT : class
 {
 	private readonly IRepositoryAPI<T, TIN, TOUT> repository;
