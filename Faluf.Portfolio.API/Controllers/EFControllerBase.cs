@@ -1,10 +1,12 @@
 ﻿using Faluf.Portfolio.Core.DTOs.Response;
 using Faluf.Portfolio.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Faluf.Portfolio.API.Controllers;
 
+[Authorize(Policy = "Read")]
 public abstract class EFControllerBase<T, TIN, TOUT> : ControllerBase where T : class where TIN : class where TOUT : class
 {
 	private readonly IRepositoryAPI<T, TIN, TOUT> repository;
