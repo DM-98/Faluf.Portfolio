@@ -6,16 +6,16 @@ namespace Faluf.Portfolio.Infrastructure.Services;
 
 public class LocalStorageService : ILocalStorageService
 {
-	private readonly IJSRuntime jsRunTime;
+	private readonly IJSRuntime jsRuntime;
 
-	public LocalStorageService(IJSRuntime jsRunTime)
+	public LocalStorageService(IJSRuntime jsRuntime)
 	{
-		this.jsRunTime = jsRunTime;
+		this.jsRuntime = jsRuntime;
 	}
 
-	public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken)
+	public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
 	{
-		string json = await jsRunTime.InvokeAsync<string>("localStorage.getItem", cancellationToken, key);
+		string json = await jsRuntime.InvokeAsync<string>("localStorage.getItem", cancellationToken, key);
 
 		if (string.IsNullOrWhiteSpace(json))
 		{
@@ -25,18 +25,18 @@ public class LocalStorageService : ILocalStorageService
 		return JsonSerializer.Deserialize<T>(json);
 	}
 
-	public async Task SetAsync<T>(string key, T value, CancellationToken cancellationToken)
+	public async Task SetAsync<T>(string key, T value, CancellationToken cancellationToken = default)
 	{
-		await jsRunTime.InvokeVoidAsync("localStorage.setItem", cancellationToken, key, JsonSerializer.Serialize(value));
+		await jsRuntime.InvokeVoidAsync("localStorage.setItem", cancellationToken, key, JsonSerializer.Serialize(value));
 	}
 
-	public async Task DeleteAsync(string key, CancellationToken cancellationToken)
+	public async Task DeleteAsync(string key, CancellationToken cancellationToken = default)
 	{
-		await jsRunTime.InvokeVoidAsync("localStorage.removeItem", cancellationToken, key);
+		await jsRuntime.InvokeVoidAsync("localStorage.removeItem", cancellationToken, key);
 	}
 
-	public async Task ClearAllAsync(CancellationToken cancellationToken)
+	public async Task ClearAllAsync(CancellationToken cancellationToken = default)
 	{
-		await jsRunTime.InvokeVoidAsync("localStorage.clear", cancellationToken);
+		await jsRuntime.InvokeVoidAsync("localStorage.clear", cancellationToken);
 	}
 }
