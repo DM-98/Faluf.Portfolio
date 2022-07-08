@@ -6,10 +6,5 @@ namespace Faluf.Portfolio.Infrastructure.Services;
 
 public class LogService : Service<Log, Log, Log>
 {
-	private readonly HttpClient httpClient;
-
-	public LogService(HttpClient httpClient) : base(httpClient, "logs")
-	{
-		this.httpClient = httpClient;
-	}
+	public LogService(HttpClient httpClient) : base(httpClient, "logs") { }
 }

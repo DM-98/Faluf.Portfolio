@@ -7,10 +7,5 @@ namespace Faluf.Portfolio.Infrastructure.Services;
 
 public class SubjectService : Service<Subject, SubjectModel, SubjectDTO>
 {
-	private readonly HttpClient httpClient;
-
-	public SubjectService(HttpClient httpClient) : base(httpClient, "subjects")
-	{
-		this.httpClient = httpClient;
-	}
+	public SubjectService(HttpClient httpClient) : base(httpClient, "subjects") { }
 }

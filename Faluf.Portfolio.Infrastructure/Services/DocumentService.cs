@@ -7,10 +7,5 @@ namespace Faluf.Portfolio.Infrastructure.Services;
 
 public class DocumentService : Service<Document, DocumentModel, DocumentDTO>
 {
-	private readonly HttpClient httpClient;
-
-	public DocumentService(HttpClient httpClient) : base(httpClient, "documents")
-	{
-		this.httpClient = httpClient;
-	}
+	public DocumentService(HttpClient httpClient) : base(httpClient, "documents") { }
 }

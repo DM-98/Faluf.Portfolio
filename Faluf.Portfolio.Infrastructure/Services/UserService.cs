@@ -7,10 +7,5 @@ namespace Faluf.Portfolio.Infrastructure.Services;
 
 public class UserService : Service<ApplicationUser, UserModel, UserDTO>
 {
-	private readonly HttpClient httpClient;
-
-	public UserService(HttpClient httpClient) : base(httpClient, "users")
-	{
-		this.httpClient = httpClient;
-	}
+	public UserService(HttpClient httpClient) : base(httpClient, "users") { }
 }
